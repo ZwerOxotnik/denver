@@ -64,7 +64,7 @@ denver.get = function (args, ...)
     -- filling the sample with values
     for i = 0, frames - 1, denver.channel do
         local env = math.min(math.min(1, i/e0), math.min(1, (frames-i)/e1))
-        local sample = osc(freq, denver.rate) * amplitude * env
+        local sample = osc(frequency, denver.rate) * amplitude * env
         sound_data:setSample(i, sample)
     end
 
