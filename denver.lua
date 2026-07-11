@@ -1,5 +1,5 @@
 local denver = {
-    _VERSION         = 'denver v1.0.3',
+    _VERSION         = 'denver v1.0.4',
     _DESCRIPTION    = 'An audio generation module for LÖVE2D',
     _URL            = 'http://github.com/superzazu/denver.lua',
     _LICENSE        = [[
@@ -30,30 +30,64 @@ denver.bits = 16
 denver.channel = 1
 denver.base_freq = 440 -- A4 = 440
 
+
+---@alias denver.waveforms "sinus"|"sawtooth"|"square"|"triangle"|"whitenoise"|"pinknoise"|"brownnoise"
+---@alias denver.notes "C"|"D"|"E"|"F"|"G"|"A"|"B"
+
+---@class denver.args
+---@field frequency string|integer? # 440 by default
+---@field waveform denver.waveforms? # "sinus" by default
+---@field volume number?
+---@field length number? # 1 by default
+---@field e0 number? # start envelope
+---@field e1 number? # end envelope
+
+
+local pi = math.pi
+local min = math.min
+local max = math.max
+local sin = math.sin
+local ceil  = math.ceil
+local floor = math.floor
+local random = math.random
+
+
 local oscillators = {}
 
--- returns a LOVE2D audio source with a waveform
--- examples :
+
+-- Returns a LOVE2D audio source with a waveform
+--
+-- Examples:
+-- ```lua
 --    s = denver.get({waveform='sinus', frequency=440, length=1})
 --    s = denver.get{waveform='square', frequency='E#3'}
---
--- note: creates one period-sample by default; that allows user to loop the
+-- ```
+-- Note: creates one period-sample by default; that allows user to loop the
 --       sample (and to have a minimum of RAM used)
-denver.get = function (args, ...)
-    local waveform = args.waveform or 'sinus'
-    local frequency = denver.noteToFrequency(args.frequency)
-                      or args.frequency or 440
-    local length = args.length or 1 / frequency
-    local frames=length*denver.rate*denver.channel
-    local framesfrequency=math.ceil(denver.rate/frequency)
-    local e0, e1=(args.e0 or 0)*frames, (args.e1 or 0)*frames  --envelope (start, end)
-    e0=math.max(e0, framesfrequency)*denver.channel
-    e1=math.max(e1, framesfrequency)*denver.channel
+---@param args denver.args
+---@param ... any
+---@return love.Source
+function denver.get(args, ...)
+    local waveform  = args.waveform or 'sinus'
+    local frequency = args.frequency
+    frequency = denver.noteToFrequency(frequency)
+                      or frequency or 440
+    local length = (args.length or 1) / frequency
+
+    local rate = denver.rate
+    local channel = denver.channel
+    local frames = length * rate * channel
+    local framesfrequency = ceil(rate/frequency)
+    local e0, e1 = (args.e0 or 0) * frames, (args.e1 or 0) * frames  --envelope (start, end)
+    e0 = max(e0, framesfrequency) * channel
+    e1 = max(e1, framesfrequency) * channel
+
     -- creating an empty sample
     local sound_data = love.sound.newSoundData(frames,
-                                              denver.rate,
+                                              rate,
                                               denver.bits,
-                                              denver.channel)
+                                              channel)
+
     -- setting up the oscillator
     if not oscillators[waveform] then
         error('waveform "'.. waveform ..'"" is not supported.', 2)
@@ -62,62 +96,70 @@ denver.get = function (args, ...)
     local amplitude = args.volume or 0.75
 
     -- filling the sample with values
-    for i = 0, frames - 1, denver.channel do
-        local env = math.min(math.min(1, i/e0), math.min(1, (frames-i)/e1))
-        local sample = osc(frequency, denver.rate) * amplitude * env
+    for i = 0, frames - 1, channel do
+        local env = min(min(1, i/e0), min(1, (frames-i)/e1))
+        local sample = osc(frequency, rate) * amplitude * env
         sound_data:setSample(i, sample)
     end
 
     return love.audio.newSource(sound_data)
 end
 
--- you can add your own waves
-denver.set = function (wave_type, osc)
+-- Adds your own wave
+---@param wave_type string
+---@param osc fun(f: number, ...): number
+function denver.set(wave_type, osc)
     oscillators[wave_type] = osc
 end
 
--- takes a note in parameter and returns a frequency
-denver.noteToFrequency = function (note_str)
+local NOTE_SEMITONES = {C=-9, D=-7, E=-5, F=-4, G=-2, A=0, B=2}
+-- Takes a note in parameter and returns a frequency
+---@param note_str string|number?
+function denver.noteToFrequency(note_str)
     if not note_str or type(note_str) ~= 'string' then
         return
     end
-    local note_semitones = {C=-9, D=-7, E=-5, F=-4, G=-2, A=0, B=2}
 
-    local semitones = note_semitones[note_str:sub(1, 1)]
+    local semitones = NOTE_SEMITONES[note_str:sub(1, 1)]
     local octave = 4
-    local alteration = 0
+    -- local alteration = 0
 
-    if note_str:len() == 2 then
-        octave = note_str:sub(2, 2)
-    elseif note_str:len() == 3 then -- # or flat
-        if note_str:sub(2, 2) == '#' then
+    if #note_str == 2 then
+        octave = tonumber(note_str:sub(2, 2))
+    elseif #note_str == 3 then -- # or flat
+        local step_symbol = note_str:sub(2, 2)
+        if step_symbol == '#' then
             semitones = semitones + 1
-        elseif note_str:sub(2, 2) == 'b' then
+        elseif step_symbol == 'b' then
             semitones = semitones - 1
         end
-        octave = note_str:sub(3, 3)
+        octave = tonumber(note_str:sub(3, 3))
     end
 
     semitones = semitones + 12 * (octave - 4)
 
-    return denver.base_freq * math.pow(math.pow(2, 1 / 12), semitones)
+    return denver.base_freq * (2^(1 / 12))^semitones
     -- frequency = root * (2^(1/12))^steps (steps(=semitones) can be negative)
 end
 
 -- OSCILLATORS
-oscillators.sinus = function (f)
+---@param f number
+---@return fun(): number
+function oscillators.sinus(f)
     local phase = 0
     return function()
-        phase = phase + 2 * math.pi / denver.rate
-        if phase >= 2 * math.pi then
-            phase = phase - 2 * math.pi
+        phase = phase + 2 * pi / denver.rate
+        if phase >= 2 * pi then
+            phase = phase - 2 * pi
         end
-        return math.sin(f * phase)
+        return sin(f * phase)
     end
 end
 
 -- thanks https://github.com/zevv/worp/blob/master/lib/Dsp/Saw.lua
-oscillators.sawtooth = function (f)
+---@param f number
+---@return fun(): number
+function oscillators.sawtooth(f)
     local dv = 2 * f / denver.rate
     local v = 0
     return function()
@@ -127,7 +169,10 @@ oscillators.sawtooth = function (f)
     end
 end
 
-oscillators.square = function (f, pwm)
+---@param f number
+---@param pwm number? # must be between 0 and 1 (0 by default)
+---@return fun(): number
+function oscillators.square(f, pwm)
     pwm = pwm or 0
     if pwm >= 1 or pwm < 0 then
         error('PWM must be between 0 and 1 (0 <= PWM < 1)', 2)
@@ -138,7 +183,9 @@ oscillators.square = function (f, pwm)
     end
 end
 
-oscillators.triangle = function (f)
+---@param f number
+---@return fun(): number
+function oscillators.triangle(f)
     local dv = 1 / denver.rate
     local v = 0
     local a = 1 -- up or down
@@ -146,22 +193,23 @@ oscillators.triangle = function (f)
         v = v + a * dv * 4 * f
         if v > 1 or v < -1 then
             a = a * -1
-            v = math.floor(v+.5)
+            v = floor(v+.5)
         end
         return v
     end
 end
 
-oscillators.whitenoise = function ()
+function oscillators.whitenoise()
     return function()
-        return math.random() * 2 - 1
+        return random() * 2 - 1
     end
 end
 
-oscillators.pinknoise = function () -- http://www.musicdsp.org/files/pink.txt
+-- https://web.archive.org/web/20170812122914/http://www.musicdsp.org/files/pink.txt
+function oscillators.pinknoise()
     local b0, b1, b2, b3, b4, b5, b6 = 0, 0, 0, 0, 0, 0, 0
     return function()
-        local white = math.random() * 2 - 1
+        local white = random() * 2 - 1
         b0 = 0.99886 * b0 + white * 0.0555179;
         b1 = 0.99332 * b1 + white * 0.0750759;
         b2 = 0.96900 * b2 + white * 0.1538520;
@@ -175,10 +223,10 @@ oscillators.pinknoise = function () -- http://www.musicdsp.org/files/pink.txt
 end
 
 -- thanks http://noisehack.com/generate-noise-web-audio-api/
-oscillators.brownnoise = function ()
+function oscillators.brownnoise()
     local lastOut = 0
     return function()
-        local white = math.random() * 2 - 1
+        local white = random() * 2 - 1
         local out = (lastOut + (0.02 * white)) / 1.02
         lastOut = out
         return out * 3.5 -- (roughly) compensate for gain
