@@ -1,9 +1,9 @@
 local denver = {
-    _VERSION         = 'denver v1.0.2-GM1',
+    _VERSION         = 'denver v1.0.3',
     _DESCRIPTION    = 'An audio generation module for LÖVE2D',
     _URL            = 'http://github.com/superzazu/denver.lua',
     _LICENSE        = [[
-Copyright (c) 2015 Nicolas Allemand
+Copyright (c) 2014-2016 Nicolas Allemand
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
