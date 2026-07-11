@@ -59,7 +59,7 @@ love.audio.play(noise)
 ## Notes
 
 * Please, read this if you want to be involved in development: https://zweroxotnik.github.io/development/message/
-* Examples has been moved to: https://gitgud.io/ZwerOxotnik/denver-examples
+* Examples has been moved and improved: https://gitgud.io/ZwerOxotnik/denver-examples
 
 ## Disclaimer
 
