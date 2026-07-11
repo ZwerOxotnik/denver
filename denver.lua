@@ -1,5 +1,5 @@
 local denver = {
-    _VERSION         = 'denver v1.0.4',
+    _VERSION         = 'denver v1.0.5',
     _DESCRIPTION    = 'An audio generation module for LÖVE2D',
     _URL            = 'http://github.com/superzazu/denver.lua',
     _LICENSE        = [[
@@ -38,7 +38,7 @@ denver.base_freq = 440 -- A4 = 440
 ---@field frequency string|integer? # 440 by default
 ---@field waveform denver.waveforms? # "sinus" by default
 ---@field volume number?
----@field length number? # 1 by default
+---@field length number?
 ---@field e0 number? # start envelope
 ---@field e1 number? # end envelope
 
@@ -72,7 +72,7 @@ function denver.get(args, ...)
     local frequency = args.frequency
     frequency = denver.noteToFrequency(frequency)
                       or frequency or 440
-    local length = (args.length or 1) / frequency
+    local length = args.length or (1 / frequency)
 
     local rate = denver.rate
     local channel = denver.channel
