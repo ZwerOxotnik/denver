@@ -10,6 +10,7 @@ denver is a simple library to help you play custom waveforms with
 It currently supports several waveforms:\
 sinus, sawtooth, square, triangle, whitenoise, pinknoise, brownnoise.
 
+Notations for [LuaLS](https://github.com/LuaLS/lua-language-server) and [Love api](https://marketplace.visualstudio.com/items?itemName=pixelbyte-studios.pixelbyte-love2d) has been added.
 
 ## Installation
 
