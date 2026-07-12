@@ -55,11 +55,16 @@ love.audio.play(noise)
 
 * Initially it was created by Nicolas Allemand (repository: https://github.com/superzazu/denver.lua)
 * And forked version from https://github.com/gretchycat/denver.lua
+* Minor changes has been made https://gitgud.io/ZwerOxotnik/denver
 
 ## Notes
 
 * Please, read this if you want to be involved in development: https://zweroxotnik.github.io/development/message/
 * Examples has been moved and improved: https://gitgud.io/ZwerOxotnik/denver-examples
+
+## See also
+
+* https://github.com/tpimh/love-sfxr: a port of the sfxr sound effect synthesizer to pure Lua
 
 ## Disclaimer
 
