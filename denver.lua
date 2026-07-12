@@ -38,7 +38,7 @@ denver.base_freq = 440 -- HZ (A4 = 440)
 ---@class denver.args
 ---@field frequency string|integer? # 440 by default
 ---@field waveform denver.waveforms? # "sinus" by default
----@field volume number?
+---@field volume number? # 0.2 by default
 ---@field length number? # 1 / frequency by default
 
 
@@ -70,14 +70,13 @@ function denver.get(args, ...)
                       or frequency or 440
     local length = args.length or (1 / frequency)
 
-    local rate = denver.rate
-    local channel = denver.channel
-
     -- creating an empty sample
-    local sound_data = love.sound.newSoundData(length * rate,
+    local rate = denver.rate
+    local samples = length * rate
+    local sound_data = love.sound.newSoundData(samples,
                                               rate,
                                               denver.bits,
-                                              channel)
+                                              denver.channel)
 
     -- setting up the oscillator
     if not oscillators[waveform] then
@@ -87,7 +86,7 @@ function denver.get(args, ...)
     -- filling the sample with values
     local amplitude = args.volume or 0.2
     local osc = oscillators[waveform](frequency, ...)
-    for i = 0, length * rate - 1 do
+    for i = 0, samples - 1 do
         local sample = osc() * amplitude
         sound_data:setSample(i, sample)
     end
