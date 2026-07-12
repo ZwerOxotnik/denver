@@ -26,10 +26,10 @@ THE SOFTWARE.
 ]]
 }
 
-denver.rate = 44100
-denver.bits = 16
-denver.channel = 1
-denver.base_freq = 440 -- A4 = 440
+denver.rate = 44100 -- Number of samples per second
+denver.bits = 16 -- Bits per sample (8 or 16).
+denver.channel = 1 -- Either 1 for mono or 2 for stereo.
+denver.base_freq = 440 -- HZ (A4 = 440)
 
 
 ---@alias denver.waveforms "sinus"|"sawtooth"|"square"|"triangle"|"whitenoise"|"pinknoise"|"brownnoise"
@@ -39,7 +39,7 @@ denver.base_freq = 440 -- A4 = 440
 ---@field frequency string|integer? # 440 by default
 ---@field waveform denver.waveforms? # "sinus" by default
 ---@field volume number?
----@field length number?
+---@field length number? # 1 / frequency by default
 
 
 local pi = math.pi
