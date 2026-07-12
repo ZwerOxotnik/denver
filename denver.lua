@@ -1,6 +1,6 @@
 ---@class denver
 local denver = {
-    _VERSION         = 'denver v1.0.6',
+    _VERSION         = 'denver v1.0.7',
     _DESCRIPTION    = 'An audio generation module for LÖVE2D',
     _URL            = 'http://github.com/superzazu/denver.lua',
     _LICENSE        = [[
@@ -62,7 +62,7 @@ local oscillators = {}
 --       sample (and to have a minimum of RAM used)
 ---@param args denver.args
 ---@param ... any
----@return love.Source
+---@return love.Source, love.SoundData
 function denver.get(args, ...)
     local waveform  = args.waveform or 'sinus'
     local frequency = args.frequency
@@ -92,7 +92,7 @@ function denver.get(args, ...)
         sound_data:setSample(i, sample)
     end
 
-    return love.audio.newSource(sound_data)
+    return love.audio.newSource(sound_data), sound_data
 end
 
 -- Adds your own wave
