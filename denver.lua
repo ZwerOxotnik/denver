@@ -1,3 +1,4 @@
+---@class denver
 local denver = {
     _VERSION         = 'denver v1.0.6',
     _DESCRIPTION    = 'An audio generation module for LÖVE2D',
@@ -82,12 +83,12 @@ function denver.get(args, ...)
     if not oscillators[waveform] then
         error('waveform "'.. waveform ..'"" is not supported.', 2)
     end
-    local osc = oscillators[waveform](frequency, ...)
 
     -- filling the sample with values
     local amplitude = args.volume or 0.2
-    for i = 0, length * denver.rate - 1 do
-        local sample = osc(frequency, denver.rate) * amplitude
+    local osc = oscillators[waveform](frequency, ...)
+    for i = 0, length * rate - 1 do
+        local sample = osc() * amplitude
         sound_data:setSample(i, sample)
     end
 
@@ -96,7 +97,7 @@ end
 
 -- Adds your own wave
 ---@param wave_type string
----@param osc fun(f: number, ...): number
+---@param osc fun(): number
 function denver.set(wave_type, osc)
     oscillators[wave_type] = osc
 end
@@ -114,6 +115,7 @@ function denver.noteToFrequency(note_str)
     -- local alteration = 0
 
     if #note_str == 2 then
+        ---@diagnostic disable-next-line: cast-local-type
         octave = tonumber(note_str:sub(2, 2))
     elseif #note_str == 3 then -- # or flat
         local step_symbol = note_str:sub(2, 2)
@@ -122,6 +124,7 @@ function denver.noteToFrequency(note_str)
         elseif step_symbol == 'b' then
             semitones = semitones - 1
         end
+        ---@diagnostic disable-next-line: cast-local-type
         octave = tonumber(note_str:sub(3, 3))
     end
 
