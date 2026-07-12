@@ -1,5 +1,5 @@
 local denver = {
-    _VERSION         = 'denver v1.0.5',
+    _VERSION         = 'denver v1.0.6',
     _DESCRIPTION    = 'An audio generation module for LÖVE2D',
     _URL            = 'http://github.com/superzazu/denver.lua',
     _LICENSE        = [[
@@ -39,15 +39,10 @@ denver.base_freq = 440 -- A4 = 440
 ---@field waveform denver.waveforms? # "sinus" by default
 ---@field volume number?
 ---@field length number?
----@field e0 number? # start envelope
----@field e1 number? # end envelope
 
 
 local pi = math.pi
-local min = math.min
-local max = math.max
 local sin = math.sin
-local ceil  = math.ceil
 local floor = math.floor
 local random = math.random
 
@@ -76,14 +71,9 @@ function denver.get(args, ...)
 
     local rate = denver.rate
     local channel = denver.channel
-    local frames = length * rate * channel
-    local framesfrequency = ceil(rate/frequency)
-    local e0, e1 = (args.e0 or 0) * frames, (args.e1 or 0) * frames  --envelope (start, end)
-    e0 = max(e0, framesfrequency) * channel
-    e1 = max(e1, framesfrequency) * channel
 
     -- creating an empty sample
-    local sound_data = love.sound.newSoundData(frames,
+    local sound_data = love.sound.newSoundData(length * rate,
                                               rate,
                                               denver.bits,
                                               channel)
@@ -93,12 +83,11 @@ function denver.get(args, ...)
         error('waveform "'.. waveform ..'"" is not supported.', 2)
     end
     local osc = oscillators[waveform](frequency, ...)
-    local amplitude = args.volume or 0.75
 
     -- filling the sample with values
-    for i = 0, frames - 1, channel do
-        local env = min(min(1, i/e0), min(1, (frames-i)/e1))
-        local sample = osc(frequency, rate) * amplitude * env
+    local amplitude = args.volume or 0.2
+    for i = 0, length * denver.rate - 1 do
+        local sample = osc(frequency, denver.rate) * amplitude
         sound_data:setSample(i, sample)
     end
 
